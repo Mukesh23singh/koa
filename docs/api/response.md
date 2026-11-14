@@ -1,6 +1,6 @@
 # Response
 
-  A Koa `Response` object is an abstraction on top of node's vanilla response object,
+  A Koa `Response` object is an abstraction on top of Node's vanilla response object,
   providing additional functionality that is useful for every day HTTP server
   development.
 
@@ -21,7 +21,7 @@
 
 ### response.status
 
-  Get response status. By default, `response.status` is set to `404` unlike node's `res.statusCode` which defaults to `200`.
+  Get response status. By default, `response.status` is set to `404` unlike Node's `res.statusCode` which defaults to `200`.
 
 ### response.status=
 
@@ -128,6 +128,7 @@ ctx.response.status = 204;
 
   - `string` written
   - `Buffer` written
+  - `Blob` streamed
   - `Stream` piped
   - `Object` || `Array` json-stringified
   - `null` || `undefined` no content response
@@ -162,6 +163,12 @@ app.use(async (ctx, next) => {
 
   The Content-Type is defaulted to application/octet-stream, and Content-Length
   is also set.
+
+#### Blob
+
+  Content-Type defaults to the Blob's `type`, or application/octet-stream if empty;
+  an existing Content-Type is preserved. Content-Length is set to the Blob's `size`
+  unless Transfer-Encoding is set.
 
 #### Stream
 
@@ -213,12 +220,19 @@ const rateLimited = ctx.response.has('X-RateLimit-Limit');
 ctx.set('Cache-Control', 'no-cache');
 ```
 
+  Header names are case-insensitive. `Content-Type` and `Content-Length` arrays
+  are unwrapped if they contain exactly one value; other lengths throw an assertion
+  error. After headers are sent, calls are ignored without validation.
+
 ### response.append(field, value)
   Append additional header `field` with value `val`.
 
 ```js
 ctx.append('Link', '<http://127.0.0.1/>');
 ```
+
+  An existing empty string is treated as absent. The `response.set()` validation
+  and headers-sent rules apply.
 
 ### response.set(fields)
 
@@ -232,6 +246,8 @@ ctx.set({
 ```
 
 This delegates to [setHeader](https://nodejs.org/dist/latest/docs/api/http.html#http_request_setheader_name_value) which sets or updates headers by specified keys and doesn't reset the entire header.
+
+The validation and headers-sent rules of `response.set(field, value)` also apply.
 
 ### response.remove(field)
 
@@ -287,17 +303,11 @@ app.use(async (ctx, next) => {
 });
 ```
 
-### response.redirect(url, [alt])
+### response.redirect(url)
 
   Perform a [302] redirect to `url`.
 
-  The string "back" is special-cased
-  to provide Referrer support, when Referrer
-  is not present `alt` or "/" is used.
-
 ```js
-ctx.redirect('back');
-ctx.redirect('back', '/index.html');
 ctx.redirect('/login');
 ctx.redirect('http://google.com');
 ```
@@ -310,6 +320,11 @@ ctx.status = 301;
 ctx.redirect('/cart');
 ctx.body = 'Redirecting to shopping cart';
 ```
+
+### response.back(url)
+
+  Similar to `.redirect(url)`, but first checks the `referer` header to redirect.
+  This is new in v3 as `.redirect(url, alt)` removes the special case `url = 'back'` option.
 
 ### response.attachment([filename], [options])
 
@@ -350,4 +365,8 @@ ctx.response.etag = crypto.createHash('md5').update(ctx.body).digest('hex');
 
 ### response.flushHeaders()
 
-  Flush any set headers, and begin the body.
+  Flush any set headers to the client. This is a proxy for [`res.flushHeaders()`](https://nodejs.org/api/http.html#requestflushheaders)
+
+### response.writable
+
+  A boolean that indicates whether the response is still writable. 

@@ -1,6 +1,6 @@
 # Request
 
-  A Koa `Request` object is an abstraction on top of node's vanilla request object,
+  A Koa `Request` object is an abstraction on top of Node's vanilla request object,
   providing additional functionality that is useful for every day HTTP server
   development.
 
@@ -9,7 +9,7 @@
 ### request.header
 
  Request header object.  This is the same as the [`headers`](https://nodejs.org/api/http.html#http_message_headers) field
- on node's [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_class_http_incomingmessage).
+ on Node's [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_class_http_incomingmessage).
 
 ### request.header=
 
@@ -101,12 +101,17 @@ ctx.request.href;
   when `app.proxy` is __true__, otherwise `Host` is used.
 
   If host is IPv6, Koa delegates parsing to
-  [WHATWG URL API](https://nodejs.org/dist/latest-v8.x/docs/api/url.html#url_the_whatwg_url_api),
+  [WHATWG URL API](https://nodejs.org/api/url.html#the-whatwg-url-api),
   *Note* This may impact performance.
 
 ### request.URL
 
-  Get WHATWG parsed URL object.
+  Get WHATWG parsed URL object based on `request.originalUrl`.
+
+  Absolute-form HTTP(S) request targets are parsed directly, so `request.URL.host`
+  can differ from `request.host`, which follows the header rules described above.
+  For other targets, the URL is constructed from `request.protocol`, `request.host`,
+  and `request.originalUrl`.
 
 ### request.type
 
@@ -416,7 +421,7 @@ ctx.acceptsLanguages();
 
 ### request.idempotent
 
-  Check if the request is idempotent.
+  Check if the request is idempotent (e.g. a `GET`, `HEAD`, etc. request).
 
 ### request.socket
 

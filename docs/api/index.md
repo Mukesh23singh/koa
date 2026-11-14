@@ -1,11 +1,11 @@
 # Installation
 
-  Koa requires __node v12__ or higher for ES2015 and async function support.
+  Koa requires __node v18.0.0__ or higher for ES2015 and async function support.
 
-  You can quickly install a supported version of node with your favorite version manager:
+  You can quickly install a supported version of Node with your favorite version manager:
 
 ```bash
-$ nvm install 7
+$ nvm install 22
 $ npm i koa
 $ node my-koa-app.js
 ```
@@ -40,7 +40,7 @@ app.listen(3000);
 ## Cascading
 
   Koa middleware cascade in a more traditional way as you may be used to with similar tools -
-  this was previously difficult to make user friendly with node's use of callbacks.
+  this was previously difficult to make user friendly with Node's use of callbacks.
   However with async functions we can achieve "true" middleware. Contrasting Connect's implementation which
   simply passes control through series of functions until one returns, Koa invoke "downstream", then
   control flows back "upstream".
@@ -90,9 +90,11 @@ app.listen(3000);
   - `app.env` defaulting to the __NODE_ENV__ or "development"
   - `app.keys` array of signed cookie keys
   - `app.proxy` when true proxy header fields will be trusted
-  - `app.subdomainOffset` offset of `.subdomains` to ignore, default to 2
-  - `app.proxyIpHeader` proxy ip header, default to `X-Forwarded-For`
-  - `app.maxIpsCount` max ips read from proxy ip header, default to 0 (means infinity)
+  - `app.subdomainOffset` offset of `.subdomains` to ignore, defaults to 2
+  - `app.proxyIpHeader` proxy ip header, defaults to `X-Forwarded-For`
+  - `app.maxIpsCount` max ips read from proxy ip header, defaults to 0 (means infinity)
+  - `app.compose` - function to handle middleware composition
+  - `app.asyncLocalStorage` pass `true` or an instance of `AsyncLocalStorage` to enable async local storage. See below for details.
 
   You can pass the settings to the constructor:
   ```js
@@ -212,6 +214,41 @@ Note:
 
 - Many properties on `ctx` are defined using getters, setters, and `Object.defineProperty()`. You can only edit these properties (not recommended) by using `Object.defineProperty()` on `app.context`. See https://github.com/koajs/koa/issues/652.
 - Mounted apps currently use their parent's `ctx` and settings. Thus, mounted apps are really just groups of middleware.
+
+## app.currentContext
+
+> New in Koa v3.
+
+If `asyncLocalStorage` is enabled, this will return the current context for the request. For example:
+
+```js
+const app = new Koa({ asyncLocalStorage: true })
+
+app.use(async (ctx, next) => {
+  callSomeFunction()
+})
+
+function callSomeFunction () {
+  const ctx = app.currentContext /* ctx of the middleware above */
+}
+```
+
+Starting in v3.1.0, you can also pass your own `AsyncLocalStorage` instance:
+
+```js
+const asyncLocalStorage = new AsyncLocalStorage()
+const app = new Koa({ asyncLocalStorage })
+
+app.use(async (ctx, next) => {
+  callSomeFunction()
+})
+
+function callSomeFunction () {
+  const ctx = asyncLocalStorage.getStore()
+}
+```
+
+Use this to pass key request details like request ID or the user to your internal services.
 
 ## Error Handling
 

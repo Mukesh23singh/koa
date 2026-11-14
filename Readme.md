@@ -2,7 +2,7 @@
 
   [![gitter][gitter-image]][gitter-url]
   [![NPM version][npm-image]][npm-url]
-  [![build status][travis-image]][travis-url]
+  [![build status][github-action-image]][github-action-url]
   [![Test coverage][coveralls-image]][coveralls-url]
   [![OpenCollective Backers][backers-image]](#backers)
   [![OpenCollective Sponsors][sponsors-image]](#sponsors)
@@ -17,10 +17,10 @@
 
 ## Installation
 
-Koa requires __node v12__ or higher for ES2015 and async function support.
+Koa requires __node v18.0.0__ or higher for ES2015 and async function support.
 
-```
-$ npm install koa
+```sh
+npm install koa
 ```
 
 ## Hello Koa
@@ -81,10 +81,9 @@ app.use((ctx, next) => {
 
 The middleware signature changed between v1.x and v2.x.  The older signature is deprecated.
 
-**Old signature middleware support will be removed in v3**
+**Old signature middleware support has been removed in v3**
 
-Please see the [Migration Guide](docs/migration.md) for more information on upgrading from v1.x and
-using v1.x middleware with v2.x.
+Please see the [Migration Guide from v2.x to v3.x](docs/migration-v2-to-v3.md) for information on upgrading from v2.x to v3.x, and the [Migration Guide from v1.x to v2.x](docs/migration-v1-to-v2.md) for information on upgrading from v1.x to v2.x.
 
 ## Context, Request and Response
 
@@ -96,7 +95,7 @@ as the parameter name for the context object.
 app.use(async (ctx, next) => { await next(); });
 ```
 
-Koa provides a `Request` object as the `request` property of the `Context`.  
+Koa provides a `Request` object as the `request` property of the `Context`.
 Koa's `Request` object provides helpful methods for working with
 http requests which delegate to an [IncomingMessage](https://nodejs.org/api/http.html#http_class_http_incomingmessage)
 from the node `http` module.
@@ -112,10 +111,10 @@ app.use(async (ctx, next) => {
 });
 ```
 
-Koa provides a `Response` object as the `response` property of the `Context`.  
+Koa provides a `Response` object as the `response` property of the `Context`.
 Koa's `Response` object provides helpful methods for working with
 http responses which delegate to a [ServerResponse](https://nodejs.org/api/http.html#http_class_http_serverresponse)
-.  
+.
 
 Koa's pattern of delegating to Node's request and response objects rather than extending them
 provides a cleaner interface and reduces conflicts between different middleware and with Node
@@ -189,14 +188,6 @@ See [AUTHORS](AUTHORS).
  - [中文文档 v1.x](https://github.com/guo-yu/koa-guide)
  - [中文文档 v2.x](https://github.com/demopark/koa-docs-Zh-CN)
  - __[#koajs]__ on freenode
-
-## Job Board
-
-Looking for a career upgrade?
-
-<a href="https://astro.netlify.com/automattic"><img src="https://astro.netlify.com/static/automattic.png"></a>
-<a href="https://astro.netlify.com/segment"><img src="https://astro.netlify.com/static/segment.png"></a>
-<a href="https://astro.netlify.com/auth0"><img src="https://astro.netlify.com/static/auth0.png"/></a>
 
 ## Backers
 
@@ -275,8 +266,8 @@ Become a sponsor and get your logo on our README on Github with a link to your s
 
 [npm-image]: https://img.shields.io/npm/v/koa.svg?style=flat-square
 [npm-url]: https://www.npmjs.com/package/koa
-[travis-image]: https://img.shields.io/travis/koajs/koa/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/koajs/koa
+[github-action-image]: https://github.com/koajs/koa/actions/workflows/node.js.yml/badge.svg
+[github-action-url]: https://github.com/koajs/koa/actions/workflows/node.js.yml
 [coveralls-image]: https://img.shields.io/codecov/c/github/koajs/koa.svg?style=flat-square
 [coveralls-url]: https://codecov.io/github/koajs/koa?branch=master
 [backers-image]: https://opencollective.com/koajs/backers/badge.svg?style=flat-square

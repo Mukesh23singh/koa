@@ -15,10 +15,12 @@
     - [Response Middleware](#response-middleware)
   - [Async operations](#async-operations)
   - [Debugging Koa](#debugging-koa)
+  - [HTTP2](#http2)
+  - [Server-Sent Events](#server-sent-events)
 
 ## Writing Middleware
 
-  Koa middleware are simple functions which return a `MiddlewareFunction` with signature (ctx, next). When
+  Koa middleware are simple functions with the signature `(ctx, next)` (i.e. a `MiddlewareFunction`). When
   the middleware is run, it must manually invoke `next()` to run the "downstream" middleware.
 
   For example if you wanted to track how long it takes for a request to propagate through Koa by adding an
@@ -198,7 +200,7 @@ app.use(async function (ctx, next) {
 
 
 ```js
-const fs = require('mz/fs');
+const fs = require('fs').promises;
 
 app.use(async function (ctx, next) {
   const paths = await fs.readdir('docs');
@@ -211,13 +213,13 @@ app.use(async function (ctx, next) {
 
 ## Debugging Koa
 
-  Koa along with many of the libraries it's built with support the __DEBUG__ environment variable from [debug](https://github.com/visionmedia/debug) which provides simple conditional logging.
+  Koa, along with many of the libraries it's built, can be debugged using Node.js's built-in util.debuglog, which provides simple conditional logging via the __NODE_DEBUG__ environment variable.
 
   For example
-  to see all Koa-specific debugging information just pass `DEBUG=koa*` and upon boot you'll see the list of middleware used, among other things.
+  to see all Koa-specific debugging information just pass `NODE_DEBUG=koa*` and upon boot you'll see the list of middleware used, among other things.
 
 ```
-$ DEBUG=koa* node --harmony examples/simple
+$ NODE_DEBUG=koa* node --harmony examples/simple
   koa:application use responseTime +0ms
   koa:application use logger +4ms
   koa:application use contentLength +0ms
@@ -232,7 +234,7 @@ $ DEBUG=koa* node --harmony examples/simple
   For example:
 
 ```js
-const path = require('path');
+const path = require('node:path');
 const serve = require('koa-static');
 
 const publicFiles = serve(path.join(__dirname, 'public'));
@@ -245,4 +247,73 @@ app.use(publicFiles);
 
 ```
   koa:application use static /public +0ms
+```
+
+This lets you use Koa’s internal debug logs without any third-party dependencies by relying on node:util's built-in debuglog.
+
+## HTTP2
+
+Example of setting up an HTTP2 server with Koa using the HTTP compatibility layer:
+
+```js
+import Koa from 'koa'
+import http2 from 'node:http2'
+import fs from 'node:fs'
+
+const app = new Koa();
+
+const onRequestHandler = app.callback();
+const serverOptions = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+}
+
+const server = http2.createSecureServer(serverOptions, onRequestHandler);
+server.listen(3000);
+```
+
+## Server-Sent Events
+
+An example of using server-sent events with Koa:
+
+```js
+import { PassThrough } from 'node:stream'
+import OpenAI from 'openai'
+import Koa from 'koa'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+const app = new Koa()
+
+app.use(async (ctx, next) => { // TODO: use your favorite routing library
+  const { message } = await ctx.request.json() // this example uses koa-body-parsers
+
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: message }],
+    stream: true,
+  })
+
+  ctx.response.type = 'text/event-stream'
+  const body = ctx.body = new PassThrough()
+
+  // streaming needs to be handled in a separate event loop
+  ;(async () => {
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content
+      if (!content) continue
+
+      body.write(`data: ${JSON.stringify({
+        delta: {
+          content: chunk.choices[0].delta.content || ''
+        }
+      })}\n\n`)
+    }
+    body.end()
+  })().catch((err) => app.emit('error', err))
+})
+
+app.listen(3000)
 ```
